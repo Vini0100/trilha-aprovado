@@ -17,17 +17,22 @@ export function Header() {
 
         {/* Ações lado direito */}
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" asChild>
-            <Link href="/entrar">Entrar</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/planos">Conheça os planos</Link>
-          </Button>
+          {/* Botões só aparecem no desktop */}
+          <div className="hidden md:flex items-center space-x-3">
+            <Button variant="ghost" asChild>
+              <Link href="/entrar">Entrar</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/planos">Conheça os planos</Link>
+            </Button>
+          </div>
 
           {/* Menu mobile */}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Menu className="h-5 w-5" />
           </Button>
+
+          {/* Dark/Light toggle (sempre visível) */}
           <ModeToggle />
         </div>
       </div>
