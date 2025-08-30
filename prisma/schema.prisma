@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Usuários (alunos)
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String   // número de celular obrigatório
+  password  String
+  createdAt DateTime @default(now())
+
+  Appointment Appointment[]
+}
+
+// Mentores
+model Mentor {
+  id        Int        @id @default(autoincrement())
+  name      String
+  bio       String?
+  subjects  Subject[]  @relation("MentorSubjects")
+  schedules Schedule[]
+  createdAt DateTime   @default(now())
+
+  Appointment Appointment[]
+}
+
+// Matérias
+model Subject {
+  id      Int      @id @default(autoincrement())
+  name    String
+  mentors Mentor[] @relation("MentorSubjects")
+
+  Appointment Appointment[]
+}
+
+// Horários disponíveis para cada mentor
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  mentor    Mentor   @relation(fields: [mentorId], references: [id])
+  mentorId  Int
+  day       String   // ex: "Monday"
+  startTime String   // ex: "08:00"
+  endTime   String   // ex: "10:00"
+
+  appointments Appointment[]
+}
+
+// Reservas de mentorias
+model Appointment {
+  id         Int      @id @default(autoincrement())
+  student    User     @relation(fields: [studentId], references: [id])
+  studentId  Int
+
+  mentor     Mentor   @relation(fields: [mentorId], references: [id])
+  mentorId   Int
+
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  subjectId  Int
+
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  scheduleId Int
+
+  status     String   @default("pending") // pending, confirmed, canceled
+  createdAt  DateTime @default(now())
+  notes      String?
+
+  @@unique([scheduleId, studentId])
+}
+
