@@ -19,29 +19,29 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  phone     String   // número de celular obrigatório
+  phone     String?
   password  String
+  role      String   @default("student")
   createdAt DateTime @default(now())
-
-  Appointment Appointment[]
+  mentorProfile Mentor?
+  appointments  Appointment[]
 }
 
 // Mentores
 model Mentor {
-  id        Int        @id @default(autoincrement())
-  name      String
-  bio       String?
-  subjects  Subject[]  @relation("MentorSubjects")
-  schedules Schedule[]
-  createdAt DateTime   @default(now())
-
-  Appointment Appointment[]
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int      @unique
+  bio          String?  @unique
+  subjects     Subject[] @relation("MentorSubjects")
+  schedules    Schedule[]
+  appointments Appointment[]
 }
 
 // Matérias
 model Subject {
   id      Int      @id @default(autoincrement())
-  name    String
+  name    String   @unique
   mentors Mentor[] @relation("MentorSubjects")
 
   Appointment Appointment[]
@@ -55,6 +55,7 @@ model Schedule {
   day       String   // ex: "Monday"
   startTime String   // ex: "08:00"
   endTime   String   // ex: "10:00"
+  status    String   @default("available") // available, blocked, removed
 
   appointments Appointment[]
 }
