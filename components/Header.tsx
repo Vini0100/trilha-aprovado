@@ -39,7 +39,7 @@ export function Header() {
                   </Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/cadastro">Cadastro</Link>
+                  <Link href="/cadastro/usuario">Cadastro</Link>
                 </Button>
               </>
             ) : (

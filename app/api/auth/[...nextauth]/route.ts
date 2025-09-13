@@ -3,8 +3,17 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import type { Session } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 
-const handler = NextAuth({
+type AuthUser = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+};
+
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -25,33 +34,39 @@ const handler = NextAuth({
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
 
-        // mapear id para string
         return {
-          ...user,
           id: user.id.toString(),
-        };
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        } as AuthUser;
       },
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   pages: {
     signIn: '/entrar',
   },
-
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
+    async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
