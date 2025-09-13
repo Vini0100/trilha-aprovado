@@ -19,3 +19,27 @@ export async function createMentorService(data: {
 
   return res.json();
 }
+
+export async function getMentorProfileService(userId: number) {
+  const res = await fetch(`/api/user/mentor/${userId}`);
+  if (!res.ok) throw new Error('Erro ao buscar perfil do mentor');
+  return res.json();
+}
+
+export async function updateMentorProfileService(
+  userId: number,
+  data: { name?: string; phone?: string; bio?: string },
+) {
+  const res = await fetch(`/api/user/mentor/${userId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.message || 'Erro ao atualizar perfil do mentor');
+  }
+
+  return res.json();
+}

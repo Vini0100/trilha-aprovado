@@ -54,7 +54,7 @@ model Schedule {
   mentorId  Int
   day       String   // ex: "Monday"
   startTime String   // ex: "08:00"
-  endTime   String   // ex: "10:00"
+  endTime   String   // ex: "09:00"
   status    String   @default("available") // available, blocked, removed
 
   appointments Appointment[]
