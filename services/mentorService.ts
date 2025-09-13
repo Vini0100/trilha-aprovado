@@ -1,3 +1,9 @@
+import { Schedule, User } from '@/lib/generated/prisma';
+
+export type MentorWithRelations = User & {
+  schedules: Schedule[];
+};
+
 export async function createMentorService(data: {
   name: string;
   email: string;
@@ -41,5 +47,11 @@ export async function updateMentorProfileService(
     throw new Error(error?.message || 'Erro ao atualizar perfil do mentor');
   }
 
+  return res.json();
+}
+
+export async function getMentorsService(): Promise<MentorWithRelations[]> {
+  const res = await fetch('/api/user/mentor');
+  if (!res.ok) throw new Error('Erro ao buscar mentores');
   return res.json();
 }

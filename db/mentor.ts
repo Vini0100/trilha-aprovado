@@ -45,3 +45,31 @@ export async function getMentorProfile(userId: number) {
     },
   });
 }
+
+export async function findAllMentors() {
+  const mentors = await prisma.mentor.findMany({
+    select: {
+      id: true,
+      bio: true,
+      user: {
+        select: { name: true, phone: true },
+      },
+      schedules: {
+        select: {
+          day: true, // formato: "YYYY-MM-DD" ou "Monday"
+          startTime: true, // "08:00"
+          endTime: true, // "09:00"
+          status: true, // "available" | "blocked" | "removed"
+        },
+      },
+    },
+  });
+
+  return mentors.map(m => ({
+    id: m.id,
+    name: m.user.name,
+    phone: m.user.phone,
+    bio: m.bio,
+    schedules: m.schedules,
+  }));
+}

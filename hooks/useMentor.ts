@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createMentorService,
   getMentorProfileService,
+  getMentorsService,
   updateMentorProfileService,
 } from '@/services/mentorService';
 
@@ -32,5 +33,13 @@ export function useUpdateMentorProfile(userId: number | null) {
         queryClient.invalidateQueries({ queryKey: ['mentor', userId] });
       }
     },
+  });
+}
+
+export function useMentors() {
+  return useQuery({
+    queryKey: ['mentors'],
+    queryFn: getMentorsService,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 }
