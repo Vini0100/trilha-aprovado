@@ -26,11 +26,20 @@ const AppointmentScheduler: React.FC = () => {
   const formatWeekday = (date: Date) =>
     date.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (selectedMentorId && selectedDate && selectedTime) {
-      alert(
-        `Consulta agendada com mentor ${selectedMentorId} para ${formatDate(selectedDate)} às ${selectedTime}`,
-      );
+      const res = await fetch('/api/payment/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointmentId: `${selectedMentorId}-${selectedDate}-${selectedTime}`, // mock
+        }),
+      });
+
+      const data = await res.json();
+      if (data.init_point) {
+        window.location.href = data.init_point; // redireciona para o checkout
+      }
     }
   };
 

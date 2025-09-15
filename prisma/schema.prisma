@@ -32,7 +32,7 @@ model Mentor {
   id           Int      @id @default(autoincrement())
   user         User     @relation(fields: [userId], references: [id])
   userId       Int      @unique
-  bio          String?  @unique
+  bio          String? 
   subjects     Subject[] @relation("MentorSubjects")
   schedules    Schedule[]
   appointments Appointment[]
@@ -79,6 +79,20 @@ model Appointment {
   createdAt  DateTime @default(now())
   notes      String?
 
+  payment    Payment?
+
   @@unique([scheduleId, studentId])
 }
 
+model Payment {
+  id            Int         @id @default(autoincrement())
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  appointmentId Int         @unique
+
+  provider      String      @default("mercadopago")
+providerId      String      @unique
+  status        String      @default("pending") // pending, approved, rejected
+  amount        Float
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
