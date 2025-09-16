@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useMentors } from '@/hooks/useMentor';
 import { MentorWithRelations } from '@/services/mentorService';
+import useMercadoPago from '@/hooks/useMercadoPago';
 
 const AppointmentScheduler: React.FC = () => {
   const { data: mentors, isLoading } = useMentors();
+  const { createMercadoPagoCheckout } = useMercadoPago();
   const today = new Date();
   const dates: Date[] = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(today);
@@ -26,22 +28,22 @@ const AppointmentScheduler: React.FC = () => {
   const formatWeekday = (date: Date) =>
     date.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
 
-  const handleSchedule = async () => {
-    if (selectedMentorId && selectedDate && selectedTime) {
-      const res = await fetch('/api/payment/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          appointmentId: `${selectedMentorId}-${selectedDate}-${selectedTime}`, // mock
-        }),
-      });
+  // const handleSchedule = async () => {
+  //   if (selectedMentorId && selectedDate && selectedTime) {
+  //     const res = await fetch('/api/payment/checkout', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         appointmentId: `${selectedMentorId}-${selectedDate}-${selectedTime}`, // mock
+  //       }),
+  //     });
 
-      const data = await res.json();
-      if (data.init_point) {
-        window.location.href = data.init_point; // redireciona para o checkout
-      }
-    }
-  };
+  //     const data = await res.json();
+  //     if (data.init_point) {
+  //       window.location.href = data.init_point; // redireciona para o checkout
+  //     }
+  //   }
+  // };
 
   const mentorSchedulesForDate = (mentor: MentorWithRelations, date: Date) => {
     const dayKey = date.toISOString().split('T')[0]; // "yyyy-MM-dd"
@@ -122,7 +124,12 @@ const AppointmentScheduler: React.FC = () => {
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              onClick={handleSchedule}
+              onClick={() =>
+                createMercadoPagoCheckout({
+                  testeId: '123',
+                  userEmail: 'loveyuuqr@gmail.com',
+                })
+              }
               disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime)}
             >
               AGENDAR CONSULTA
