@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from './ui/card';
 import { toast } from 'sonner';
-import { useCreateSchedules, useMentorSchedules } from '@/hooks/useSchedule';
+import { useCreateSchedules, useMentorSchedules, useRemoveSchedules } from '@/hooks/useSchedule';
 
 interface ScheduleFormProps {
   mentorId: number;
@@ -16,6 +16,7 @@ interface HourBlock {
 
 export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
   const createSchedules = useCreateSchedules(mentorId);
+  const removeSchedules = useRemoveSchedules(mentorId);
   const { data: existingSchedules, isLoading } = useMentorSchedules(mentorId);
 
   const dates = useMemo(() => {
@@ -55,18 +56,43 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
   };
 
   const handleSubmit = () => {
-    const payload = Object.entries(selectedHours).flatMap(([day, hours]) =>
+    // Monta todos os horários atualmente selecionados
+    const selected = Object.entries(selectedHours).flatMap(([day, hours]) =>
       hours.map(h => ({ day, startTime: h.startTime, endTime: h.endTime })),
     );
-    if (payload.length === 0) {
-      toast.error('Selecione ao menos um horário!');
+    // Monta todos os horários existentes
+    const existing =
+      (existingSchedules as { day: string; startTime: string; endTime: string }[]) || [];
+    // Horários a remover: estão em existingSchedules mas não em selectedHours
+    const toRemove = existing.filter(
+      e =>
+        !selected.some(
+          s => s.day === e.day && s.startTime === e.startTime && s.endTime === e.endTime,
+        ),
+    );
+    // Horários a adicionar: estão em selectedHours mas não em existingSchedules
+    const toAdd = selected.filter(
+      s =>
+        !existing.some(
+          e => e.day === s.day && e.startTime === s.startTime && e.endTime === s.endTime,
+        ),
+    );
+    if (toAdd.length === 0 && toRemove.length === 0) {
+      toast.error('Nenhuma alteração nos horários!');
       return;
     }
-
-    createSchedules.mutate(payload, {
-      onSuccess: () => toast.success('Horários salvos!'),
-      onError: err => toast.error(err.message || 'Erro ao salvar horários'),
-    });
+    if (toRemove.length > 0) {
+      removeSchedules.mutate(toRemove, {
+        onSuccess: () => toast.success('Horários removidos!'),
+        onError: (err: any) => toast.error(err.message || 'Erro ao remover horários'),
+      });
+    }
+    if (toAdd.length > 0) {
+      createSchedules.mutate(toAdd, {
+        onSuccess: () => toast.success('Horários salvos!'),
+        onError: (err: any) => toast.error(err.message || 'Erro ao salvar horários'),
+      });
+    }
   };
 
   const formatDate = (date: Date) =>
@@ -79,9 +105,7 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
       const preloaded: Record<string, HourBlock[]> = {};
       existingSchedules.forEach((s: { day: string; startTime: string; endTime: string }) => {
         if (!preloaded[s.day]) preloaded[s.day] = [];
-        if (!preloaded[s.day].some(h => h.startTime === s.startTime && h.endTime === s.endTime)) {
-          preloaded[s.day].push({ startTime: s.startTime, endTime: s.endTime });
-        }
+        preloaded[s.day].push({ startTime: s.startTime, endTime: s.endTime });
       });
       setSelectedHours(preloaded);
     }

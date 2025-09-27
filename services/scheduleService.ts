@@ -1,3 +1,20 @@
+export async function removeMentorSchedulesService(
+  mentorId: number,
+  schedules: { day: string; startTime: string; endTime: string }[],
+) {
+  const res = await fetch('/api/schedule', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mentorId, schedules }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.error || 'Erro ao remover horários');
+  }
+
+  return res.json();
+}
 export async function createMentorSchedulesService(
   mentorId: number,
   schedules: { day: string; startTime: string; endTime: string }[],
