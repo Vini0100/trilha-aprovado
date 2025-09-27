@@ -19,6 +19,8 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
   const removeSchedules = useRemoveSchedules(mentorId);
   const { data: existingSchedules, isLoading } = useMentorSchedules(mentorId);
 
+  console.log(existingSchedules);
+
   const dates = useMemo(() => {
     const today = new Date();
     const arr: Date[] = [];
@@ -178,23 +180,37 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
           <h4 className="font-semibold mb-2">Horários selecionados:</h4>
           <div className="flex flex-wrap gap-2">
             {Object.entries(selectedHours).flatMap(([day, hours]) =>
-              hours.map((h, idx) => (
-                <div
-                  key={`${day}-${h.startTime}-${idx}`}
-                  className="flex items-center bg-blue-50 text-blue-700 rounded-full px-3 py-1 gap-2"
-                >
-                  <span>
-                    {day} - {h.startTime} às {h.endTime}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-red-500 font-bold hover:text-red-700"
-                    onClick={() => removeHour(day, h.startTime)}
+              hours.map((h, idx) => {
+                // Busca o status do horário em existingSchedules
+                const status = (existingSchedules || []).find(
+                  (s: any) =>
+                    s.day === day && s.startTime === h.startTime && s.endTime === h.endTime,
+                )?.status;
+                const isBooked = status === 'booked';
+                return (
+                  <div
+                    key={`${day}-${h.startTime}-${idx}`}
+                    className={`flex items-center rounded-full px-3 py-1 gap-2 ${
+                      isBooked
+                        ? 'bg-gray-300 text-gray-700 opacity-70 cursor-not-allowed'
+                        : 'bg-blue-50 text-blue-700'
+                    }`}
                   >
-                    ×
-                  </button>
-                </div>
-              )),
+                    <span>
+                      {day} - {h.startTime} às {h.endTime}
+                    </span>
+                    {!isBooked && (
+                      <button
+                        type="button"
+                        className="text-red-500 font-bold hover:text-red-700"
+                        onClick={() => removeHour(day, h.startTime)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                );
+              }),
             )}
           </div>
         </div>
