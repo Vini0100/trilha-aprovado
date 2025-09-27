@@ -1,40 +1,66 @@
-// app/api/mercadopago-webhook/route.js
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import {
+  updatePaymentStatusByProviderId,
+  findAppointmentByProviderId,
+  updateAppointmentStatus,
+  updateScheduleStatus,
+} from '@/db/payment';
 
-import { NextResponse } from 'next/server';
-import { Payment } from 'mercadopago';
-import mpClient, { verifyMercadoPagoSignature } from '@/lib/mercado-pago';
-import { handleMercadoPagoPayment } from '@/app/server/mercado-pago/handle-payment';
+const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    verifyMercadoPagoSignature(request);
+    const bodyText = await req.text();
+    const payload = JSON.parse(bodyText);
 
-    const body = await request.json();
-
-    const { type, data } = body;
-
-    switch (type) {
-      case 'payment':
-        const payment = new Payment(mpClient);
-        const paymentData = await payment.get({ id: data.id });
-        if (
-          paymentData.status === 'approved' || // Pagamento por cartão OU
-          paymentData.date_approved !== null // Pagamento por Pix
-        ) {
-          await handleMercadoPagoPayment(paymentData);
-        }
-        break;
-      // case "subscription_preapproval": Eventos de assinatura
-      //   console.log("Subscription preapproval event");
-      //   console.log(data);
-      //   break;
-      default:
-        console.log('Unhandled event type:', type);
+    // 1️⃣ Validar assinatura só em produção
+    if (IS_PRODUCTION) {
+      const signature = req.headers.get('x-mp-signature');
+      const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+      if (hash !== signature) {
+        console.log('Assinatura inválida no webhook');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
     }
 
-    return NextResponse.json({ received: true }, { status: 200 });
-  } catch (error) {
-    console.error('Error handling webhook:', error);
-    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
+    // 2️⃣ Tratar pagamentos PIX
+    if (payload.type === 'payment') {
+      const paymentData = payload.data;
+      const providerId = String(paymentData.id);
+
+      // fallback para testes
+      const status = paymentData.status || 'approved';
+
+      // 3️⃣ Atualizar Payment
+      await updatePaymentStatusByProviderId(providerId, status);
+
+      console.log(`Pagamento atualizado: ${providerId}, status: ${status}`);
+
+      // 4️⃣ Atualizar Appointment e Schedule
+      const appointment = await findAppointmentByProviderId(providerId);
+
+      if (appointment) {
+        // atualizar status da appointment
+        await updateAppointmentStatus(
+          appointment.id,
+          status === 'approved' ? 'confirmed' : 'pending',
+        );
+        // atualizar status do schedule
+        await updateScheduleStatus(
+          appointment.scheduleId,
+          status === 'approved' ? 'booked' : 'available',
+        );
+        console.log(
+          `Appointment ${appointment.id} e Schedule ${appointment.scheduleId} atualizados`,
+        );
+      }
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('Erro no webhook Mercado Pago:', err);
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }

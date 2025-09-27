@@ -52,12 +52,14 @@ model Schedule {
   id        Int      @id @default(autoincrement())
   mentor    Mentor   @relation(fields: [mentorId], references: [id])
   mentorId  Int
-  day       String   // ex: "Monday"
-  startTime String   // ex: "08:00"
-  endTime   String   // ex: "09:00"
-  status    String   @default("available") // available, blocked, removed
+  day       String
+  startTime String
+  endTime   String
+  status    String   @default("available")
 
   appointments Appointment[]
+
+  @@unique([mentorId, day, startTime, endTime]) // <-- evita duplicados
 }
 
 // Reservas de mentorias

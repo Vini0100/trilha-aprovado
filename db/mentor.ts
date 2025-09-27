@@ -56,6 +56,7 @@ export async function findAllMentors() {
       },
       schedules: {
         select: {
+          id: true,
           day: true, // formato: "YYYY-MM-DD" ou "Monday"
           startTime: true, // "08:00"
           endTime: true, // "09:00"

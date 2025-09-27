@@ -152,9 +152,9 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
           <h4 className="font-semibold mb-2">Horários selecionados:</h4>
           <div className="flex flex-wrap gap-2">
             {Object.entries(selectedHours).flatMap(([day, hours]) =>
-              hours.map(h => (
+              hours.map((h, idx) => (
                 <div
-                  key={`${day}-${h.startTime}`}
+                  key={`${day}-${h.startTime}-${idx}`}
                   className="flex items-center bg-blue-50 text-blue-700 rounded-full px-3 py-1 gap-2"
                 >
                   <span>
