@@ -79,7 +79,9 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
       const preloaded: Record<string, HourBlock[]> = {};
       existingSchedules.forEach((s: { day: string; startTime: string; endTime: string }) => {
         if (!preloaded[s.day]) preloaded[s.day] = [];
-        preloaded[s.day].push({ startTime: s.startTime, endTime: s.endTime });
+        if (!preloaded[s.day].some(h => h.startTime === s.startTime && h.endTime === s.endTime)) {
+          preloaded[s.day].push({ startTime: s.startTime, endTime: s.endTime });
+        }
       });
       setSelectedHours(preloaded);
     }
