@@ -1,15 +1,17 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useMentors } from '@/hooks/useMentor';
+import { useQueryClient } from '@tanstack/react-query';
 import { MentorWithRelations } from '@/services/mentorService';
 import { useSession } from 'next-auth/react';
+import { useAppointment } from '@/hooks/useAppointment';
 
 const AppointmentScheduler: React.FC = () => {
+  const queryClient = useQueryClient();
   const { data: mentors, isLoading } = useMentors();
   const { data: session } = useSession();
-
-  console.log(mentors);
 
   const today = new Date();
   const dates: Date[] = Array.from({ length: 14 }, (_, i) => {
@@ -36,40 +38,27 @@ const AppointmentScheduler: React.FC = () => {
     return mentor.schedules.filter(s => s.day === dayKey && s.status === 'available');
   };
 
-  const [qrCode, setQrCode] = useState<string | null>(null);
+  const { create, qrCode, showSuccess, successInfo, reset } = useAppointment();
 
-  const handleSchedule = async (mentorId: number) => {
+  const handleSchedule = (mentorId: number) => {
     if (!selectedDate || !selectedTime) return;
 
     const mentor = mentors?.find(m => m.id === mentorId);
     const availableSchedules = mentor?.schedules.filter(
       s => s.day === selectedDate.toISOString().split('T')[0] && s.status === 'available',
     );
-
     const schedule = availableSchedules?.find(s => s.startTime === selectedTime);
-
     if (!schedule) {
       console.error('Nenhum schedule correspondente encontrado');
       return;
     }
 
-    const res = await fetch('/api/mercado-pago', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentId: Number(session?.user.id),
-        mentorId,
-        subjectId: 1,
-        scheduleId: schedule.id,
-      }),
+    create({
+      studentId: Number(session?.user.id),
+      mentorId,
+      subjectId: 1,
+      scheduleId: schedule.id,
     });
-
-    const data = await res.json();
-    if (data.qrCode) {
-      setQrCode(`data:image/png;base64,${data.qrCode}`);
-    } else {
-      console.error(data.error || 'Erro ao gerar PIX');
-    }
   };
 
   if (isLoading) return <p>Carregando mentores...</p>;
@@ -152,10 +141,33 @@ const AppointmentScheduler: React.FC = () => {
               AGENDAR CONSULTA
             </button>
 
-            {qrCode && (
+            {qrCode && !showSuccess && (
               <div className="flex flex-col items-center gap-2">
                 <p className="text-sm font-medium">Escaneie o QR Code para pagar via PIX:</p>
                 <img src={qrCode} alt="QR Code Pix" className="w-48 h-48 border rounded-lg" />
+              </div>
+            )}
+            {showSuccess && successInfo && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                <div className="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center gap-4">
+                  <h2 className="text-xl font-bold text-green-700">Pagamento aprovado!</h2>
+                  <p className="text-base">Seu agendamento foi confirmado para:</p>
+                  <div className="font-semibold text-lg">
+                    {successInfo.date} às {successInfo.time}
+                  </div>
+                  <button
+                    className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={() => {
+                      reset();
+                      setSelectedMentorId(null);
+                      setSelectedDate(dates[0]);
+                      setSelectedTime(null);
+                      queryClient.invalidateQueries({ queryKey: ['mentors'] });
+                    }}
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             )}
           </CardFooter>

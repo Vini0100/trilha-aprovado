@@ -6,6 +6,7 @@ import {
   updateAppointmentStatus,
   updateScheduleStatus,
 } from '@/db/payment';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
@@ -30,8 +31,24 @@ export async function POST(req: NextRequest) {
       const paymentData = payload.data;
       const providerId = String(paymentData.id);
 
-      // fallback para testes
-      const status = paymentData.status || 'approved';
+      // Buscar status real na API do Mercado Pago
+      const mpClient = new MercadoPagoConfig({
+        accessToken: process.env.MERCADO_PAGO_ACCESS || process.env.MERCADO_PAGO_ACCESS_TOKEN || '',
+        options: { timeout: 5000 },
+      });
+      const mpPayment = new Payment(mpClient);
+      let status = null;
+      try {
+        const paymentInfo = await mpPayment.get({ id: providerId });
+        status = paymentInfo.status;
+      } catch (e) {
+        console.error('Erro ao buscar status do pagamento na API Mercado Pago:', e);
+        return NextResponse.json({ error: 'Erro ao buscar status do pagamento' }, { status: 500 });
+      }
+      if (!status) {
+        console.log('Status do pagamento não encontrado na API Mercado Pago');
+        return NextResponse.json({ error: 'Status do pagamento não encontrado' }, { status: 400 });
+      }
 
       // 3️⃣ Atualizar Payment
       await updatePaymentStatusByProviderId(providerId, status);
