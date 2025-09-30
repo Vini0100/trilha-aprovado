@@ -35,3 +35,19 @@ export async function findOrCreateAppointment({
 
   return appointment;
 }
+
+export async function getMentorAppointments(mentorId: number) {
+  return prisma.appointment.findMany({
+    where: {
+      mentorId,
+      status: {
+        in: ['confirmed', 'approved'],
+      },
+    },
+    include: {
+      schedule: true,
+      student: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}

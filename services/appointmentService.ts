@@ -29,3 +29,9 @@ export async function getUserAppointments(userId: number) {
   if (!res.ok) throw new Error('Erro ao buscar agendamentos do usuário');
   return res.json();
 }
+
+export async function getMentorAppointments(mentorId: number) {
+  const res = await fetch(`/api/mentor-appointments?mentorId=${mentorId}`);
+  if (!res.ok) throw new Error('Erro ao buscar agendamentos pagos do mentor');
+  return res.json();
+}

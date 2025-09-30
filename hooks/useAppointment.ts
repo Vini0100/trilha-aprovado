@@ -4,6 +4,7 @@ import {
   createAppointment,
   getAppointmentStatus,
   getUserAppointments,
+  getMentorAppointments,
 } from '@/services/appointmentService';
 
 export function useUserAppointments(userId: number | undefined) {
@@ -11,6 +12,15 @@ export function useUserAppointments(userId: number | undefined) {
     queryKey: ['user-appointments', userId],
     queryFn: () => (userId ? getUserAppointments(userId) : Promise.resolve([])),
     enabled: !!userId,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useMentorAppointments(mentorId: number | undefined) {
+  return useQuery({
+    queryKey: ['mentor-appointments', mentorId],
+    queryFn: () => (mentorId ? getMentorAppointments(mentorId) : Promise.resolve([])),
+    enabled: !!mentorId,
     staleTime: 1000 * 60 * 2,
   });
 }
