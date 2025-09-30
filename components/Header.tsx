@@ -58,9 +58,11 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            <Button asChild>
-              <Link href="/planos">Conheça os planos</Link>
-            </Button>
+            {session && (
+              <Button asChild>
+                <Link href="/meus-agendamentos">Meus Agendamentos</Link>
+              </Button>
+            )}
           </div>
 
           {/* Menu mobile */}

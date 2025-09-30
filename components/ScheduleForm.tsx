@@ -19,8 +19,6 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
   const removeSchedules = useRemoveSchedules(mentorId);
   const { data: existingSchedules, isLoading } = useMentorSchedules(mentorId);
 
-  console.log(existingSchedules);
-
   const dates = useMemo(() => {
     const today = new Date();
     const arr: Date[] = [];

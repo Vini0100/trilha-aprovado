@@ -3,22 +3,50 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   const appointmentId = Number(req.nextUrl.searchParams.get('appointmentId'));
-  if (!appointmentId) {
-    return NextResponse.json({ error: 'appointmentId is required' }, { status: 400 });
+  const userId = Number(req.nextUrl.searchParams.get('userId'));
+
+  if (appointmentId) {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { schedule: true },
+    });
+    if (!appointment) {
+      return NextResponse.json({ error: 'Agendamento não encontrado' }, { status: 404 });
+    }
+    return NextResponse.json({
+      status: appointment.status,
+      date: appointment.schedule?.day,
+      time: appointment.schedule?.startTime,
+    });
   }
 
-  const appointment = await prisma.appointment.findUnique({
-    where: { id: appointmentId },
-    include: { schedule: true },
-  });
-
-  if (!appointment) {
-    return NextResponse.json({ error: 'Agendamento não encontrado' }, { status: 404 });
+  if (userId) {
+    // Buscar todos os agendamentos aprovados do usuário
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        studentId: userId,
+        status: {
+          in: ['confirmed', 'approved'],
+        },
+      },
+      include: {
+        schedule: true,
+        mentor: { include: { user: true } },
+        subject: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return NextResponse.json(
+      appointments.map(a => ({
+        id: a.id,
+        date: a.schedule?.day,
+        time: a.schedule?.startTime,
+        mentorName: a.mentor?.user?.name,
+        subjectName: a.subject?.name,
+        status: a.status,
+      })),
+    );
   }
 
-  return NextResponse.json({
-    status: appointment.status,
-    date: appointment.schedule?.day,
-    time: appointment.schedule?.startTime,
-  });
+  return NextResponse.json({ error: 'appointmentId or userId is required' }, { status: 400 });
 }

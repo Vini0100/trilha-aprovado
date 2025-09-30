@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createAppointment, getAppointmentStatus } from '@/services/appointmentService';
+import {
+  createAppointment,
+  getAppointmentStatus,
+  getUserAppointments,
+} from '@/services/appointmentService';
+
+export function useUserAppointments(userId: number | undefined) {
+  return useQuery({
+    queryKey: ['user-appointments', userId],
+    queryFn: () => (userId ? getUserAppointments(userId) : Promise.resolve([])),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 2,
+  });
+}
 
 export function useAppointment() {
   const [appointmentId, setAppointmentId] = useState<number | null>(null);
