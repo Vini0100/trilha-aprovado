@@ -13,18 +13,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ModeToggle } from './ModeToggle';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="sticky top-0 border-b bg-background z-50">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold text-blue-600">Trilha</span>
-          <span className="text-xl font-bold text-red-600">Aprovado</span>
-        </Link>
+    <header className="sticky top-0 border-b bg-background z-40 w-full">
+      <div className="flex h-16 items-center justify-between px-4 w-full">
+        {/* Logo e Sidebar Trigger */}
+        <div className="flex items-center space-x-4">
+          <SidebarTrigger />
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="text-xl font-bold text-blue-600">Trilha</span>
+            <span className="text-xl font-bold text-red-600">Aprovado</span>
+          </Link>
+        </div>
 
         {/* Ações lado direito */}
         <div className="flex items-center space-x-3">
@@ -65,13 +69,37 @@ export function Header() {
             )}
           </div>
 
-          {/* Menu mobile */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          {/* Menu mobile - simplificado */}
+          <div className="md:hidden">
+            {session ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>{session.user?.email ?? 'Minha Conta'}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/meus-agendamentos">Meus Agendamentos</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/entrar">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
+            )}
+          </div>
 
           {/* Dark/Light toggle */}
-          <ModeToggle />
+          {/* <ModeToggle /> */}
         </div>
       </div>
     </header>

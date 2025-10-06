@@ -7,9 +7,7 @@ import { useMentorAppointments } from '@/hooks/useAppointment';
 export default function MentorAppointmentsPage() {
   const { data: session } = useSession();
   const mentorId =
-    session?.user && 'mentorId' in session.user && session.user.mentorId
-      ? Number((session.user as typeof session.user & { mentorId?: number | string }).mentorId)
-      : undefined;
+   session?.user.id ? Number(session.user.id) : undefined;
   const { data: appointments, isLoading } = useMentorAppointments(mentorId);
 
   if (!mentorId) {
