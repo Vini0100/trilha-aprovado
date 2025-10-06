@@ -38,7 +38,7 @@ const AppointmentScheduler: React.FC = () => {
     return mentor.schedules.filter(s => s.day === dayKey && s.status === 'available');
   };
 
-  const { create, qrCode, showSuccess, successInfo, reset } = useAppointment();
+  const { create, qrCode, paymentAmount, showSuccess, successInfo, reset } = useAppointment();
 
   const handleSchedule = (mentorId: number) => {
     if (!selectedDate || !selectedTime) return;
@@ -142,9 +142,23 @@ const AppointmentScheduler: React.FC = () => {
             </button>
 
             {qrCode && !showSuccess && (
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-sm font-medium">Escaneie o QR Code para pagar via PIX:</p>
-                <img src={qrCode} alt="QR Code Pix" className="w-48 h-48 border rounded-lg" />
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-sm font-medium text-center">Escaneie o QR Code para pagar via PIX:</p>
+                  <img src={qrCode} alt="QR Code Pix" className="w-48 h-48 border rounded-lg" />
+                </div>
+                <div className="flex flex-col items-center lg:items-start gap-2 lg:ml-4">
+                  <div className="text-center lg:text-left">
+                    <p className="text-lg font-semibold text-gray-700">Valor a pagar:</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {paymentAmount ? `R$ ${paymentAmount.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                    </p>
+                  </div>
+                  <div className="text-sm text-gray-600 max-w-xs text-center lg:text-left">
+                    <p>• Após o pagamento, seu agendamento será confirmado automaticamente</p>
+                    <p>• O pagamento pode levar alguns segundos para ser processado</p>
+                  </div>
+                </div>
               </div>
             )}
             {showSuccess && successInfo && (

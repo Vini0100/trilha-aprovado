@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       appointmentId: appointment.id,
       qrCode,
       ticketUrl,
+      amount: payment.amount,
     });
   } catch (err) {
     console.error(err);

@@ -28,6 +28,7 @@ export function useMentorAppointments(mentorId: number | undefined) {
 export function useAppointment() {
   const [appointmentId, setAppointmentId] = useState<number | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successInfo, setSuccessInfo] = useState<{ date: string; time: string } | null>(null);
 
@@ -38,10 +39,12 @@ export function useAppointment() {
       if (data.qrCode) {
         setQrCode(`data:image/png;base64,${data.qrCode}`);
         setAppointmentId(data.appointmentId);
+        setPaymentAmount(data.amount);
         setShowSuccess(false);
       } else {
         setQrCode(null);
         setAppointmentId(null);
+        setPaymentAmount(null);
       }
     },
   });
@@ -68,6 +71,7 @@ export function useAppointment() {
     setShowSuccess(false);
     setQrCode(null);
     setAppointmentId(null);
+    setPaymentAmount(null);
     setSuccessInfo(null);
   };
 
@@ -75,6 +79,7 @@ export function useAppointment() {
     create: mutation.mutate,
     isCreating: mutation.isPending,
     qrCode,
+    paymentAmount,
     appointmentId,
     showSuccess,
     successInfo,
