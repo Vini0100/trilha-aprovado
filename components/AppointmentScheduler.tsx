@@ -3,6 +3,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useMentors } from '@/hooks/useMentor';
+import { useSubjects } from '@/hooks/useSubject';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from './ui/select';
 import { useQueryClient } from '@tanstack/react-query';
 import { MentorWithRelations } from '@/services/mentorService';
 import { useSession } from 'next-auth/react';
@@ -27,6 +35,7 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedMentorId, setSelectedMentorId] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(dates[0]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -39,6 +48,7 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const { create, qrCode, paymentAmount, showSuccess, successInfo, reset } = useAppointment();
+  const { data: subjects, isLoading: isLoadingSubjects } = useSubjects();
 
   const handleSchedule = (mentorId: number) => {
     if (!selectedDate || !selectedTime) return;
@@ -53,10 +63,15 @@ const AppointmentScheduler: React.FC = () => {
       return;
     }
 
+    if (!selectedSubjectId) {
+      console.error('Nenhuma matéria selecionada');
+      return;
+    }
+
     create({
       studentId: Number(session?.user.id),
       mentorId,
-      subjectId: 1,
+      subjectId: selectedSubjectId,
       scheduleId: schedule.id,
     });
   };
@@ -88,6 +103,7 @@ const AppointmentScheduler: React.FC = () => {
                         setSelectedDate(date);
                         setSelectedMentorId(mentor.id);
                         setSelectedTime(null);
+                        setSelectedSubjectId(null);
                       }}
                     >
                       <div className="text-xs font-semibold">{formatWeekday(date)}</div>
@@ -128,18 +144,48 @@ const AppointmentScheduler: React.FC = () => {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col gap-4 items-center">
-            <button
-              className={`w-full md:w-auto px-6 py-3 rounded-lg font-semibold ${
-                selectedMentorId === mentor.id && selectedDate && selectedTime
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-              disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime)}
-              onClick={() => handleSchedule(mentor.id)}
-            >
-              AGENDAR CONSULTA
-            </button>
+          <CardFooter className="flex flex-col gap-4 items-center md:items-start">
+            <div className="w-full md:w-auto flex flex-col items-center md:items-start gap-3">
+              <div className="w-full md:w-64">
+                {selectedTime ? (
+                  isLoadingSubjects ? (
+                    <div className="text-sm text-gray-500">Carregando matérias...</div>
+                  ) : subjects && subjects.length > 0 ? (
+                    <div className="text-sm">
+                      <span className="mb-1 font-medium block">Matéria</span>
+                      <Select value={selectedSubjectId ? String(selectedSubjectId) : ''} onValueChange={val => setSelectedSubjectId(val ? Number(val) : null)}>
+                        <SelectTrigger>
+                          <SelectValue>{selectedSubjectId ? subjects.find(s => s.id === selectedSubjectId)?.name : 'Selecione a matéria'}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subjects.map(s => (
+                            <SelectItem key={s.id} value={String(s.id)}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500">Nenhuma matéria disponível.</div>
+                  )
+                ) : (
+                  <div className="text-sm text-gray-500">Selecione um horário para escolher a matéria</div>
+                )}
+              </div>
+
+              <button
+                className={`w-full md:w-auto px-6 py-3 rounded-lg font-semibold ${
+                  selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId)}
+                onClick={() => handleSchedule(mentor.id)}
+              >
+                AGENDAR CONSULTA
+              </button>
+            </div>
 
             {qrCode && !showSuccess && (
               <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 p-4 bg-gray-50 rounded-lg">
