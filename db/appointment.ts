@@ -5,11 +5,15 @@ export async function findOrCreateAppointment({
   mentorId,
   subjectId,
   scheduleId,
+  contactMethod,
+  contactValue,
 }: {
   studentId: number;
   mentorId: number;
   subjectId: number;
   scheduleId: number;
+  contactMethod: string;
+  contactValue: string;
 }) {
   // Verifica se já existe appointment para esse horário + aluno
   let appointment = await prisma.appointment.findUnique({
@@ -29,6 +33,8 @@ export async function findOrCreateAppointment({
         subjectId,
         scheduleId,
         status: 'pending',
+        contactMethod: contactMethod,
+        contactValue: contactValue,
       },
     });
   }

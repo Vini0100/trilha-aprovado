@@ -3,16 +3,20 @@ export async function createAppointment({
   mentorId,
   subjectId,
   scheduleId,
+  contactMethod,
+  contactValue,
 }: {
   studentId: number;
   mentorId: number;
   subjectId: number;
   scheduleId: number;
+  contactMethod?: string | null;
+  contactValue?: string | null;
 }) {
   const res = await fetch('/api/mercado-pago', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ studentId, mentorId, subjectId, scheduleId }),
+    body: JSON.stringify({ studentId, mentorId, subjectId, scheduleId, contactMethod, contactValue }),
   });
   if (!res.ok) throw new Error('Erro ao criar agendamento');
   return res.json();

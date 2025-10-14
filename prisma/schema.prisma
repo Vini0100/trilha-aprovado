@@ -81,6 +81,9 @@ model Appointment {
   createdAt  DateTime @default(now())
   notes      String?
 
+  contactMethod String
+  contactValue  String
+
   payment    Payment?
 
   @@unique([scheduleId, studentId])

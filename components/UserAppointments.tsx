@@ -45,6 +45,12 @@ export default function UserAppointments() {
               <div className="flex-1 text-right text-sm text-gray-500 hidden sm:block">
                 {appt.subjectName}
               </div>
+              {appt.contactMethod && appt.contactValue && (
+                <div className="w-full sm:w-auto text-sm text-gray-600 mt-2 sm:mt-0">
+                  <div className="font-medium">Meu contato ({appt.contactMethod})</div>
+                  <div>{appt.contactValue}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

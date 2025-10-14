@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useMentors } from '@/hooks/useMentor';
-import { useSubjects } from '@/hooks/useSubject';
+// subjects are loaded per-mentor via the mentors API (mentor.subjects)
 import {
   Select,
   SelectTrigger,
@@ -11,6 +11,8 @@ import {
   SelectContent,
   SelectItem,
 } from './ui/select';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Input } from './ui/input';
 import { useQueryClient } from '@tanstack/react-query';
 import { MentorWithRelations } from '@/services/mentorService';
 import { useSession } from 'next-auth/react';
@@ -36,6 +38,8 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(dates[0]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
+  const [selectedContactMethod, setSelectedContactMethod] = useState<'whatsapp' | 'email' | null>(null);
+  const [selectedContactValue, setSelectedContactValue] = useState<string>('');
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -48,7 +52,6 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const { create, qrCode, paymentAmount, showSuccess, successInfo, reset } = useAppointment();
-  const { data: subjects, isLoading: isLoadingSubjects } = useSubjects();
 
   const handleSchedule = (mentorId: number) => {
     if (!selectedDate || !selectedTime) return;
@@ -67,12 +70,18 @@ const AppointmentScheduler: React.FC = () => {
       console.error('Nenhuma matéria selecionada');
       return;
     }
+    if (!selectedContactMethod || !selectedContactValue) {
+      console.error('Contato não definido');
+      return;
+    }
 
     create({
       studentId: Number(session?.user.id),
       mentorId,
       subjectId: selectedSubjectId,
       scheduleId: schedule.id,
+      contactMethod: selectedContactMethod,
+      contactValue: selectedContactValue,
     });
   };
 
@@ -100,11 +109,13 @@ const AppointmentScheduler: React.FC = () => {
                         isSelected ? 'bg-blue-100 border-blue-500' : 'bg-gray-100'
                       }`}
                       onClick={() => {
-                        setSelectedDate(date);
-                        setSelectedMentorId(mentor.id);
-                        setSelectedTime(null);
-                        setSelectedSubjectId(null);
-                      }}
+                          setSelectedDate(date);
+                          setSelectedMentorId(mentor.id);
+                          setSelectedTime(null);
+                          setSelectedSubjectId(null);
+                          setSelectedContactMethod(null);
+                          setSelectedContactValue('');
+                        }}
                     >
                       <div className="text-xs font-semibold">{formatWeekday(date)}</div>
                       <div className="text-sm">{formatDate(date)}</div>
@@ -130,7 +141,14 @@ const AppointmentScheduler: React.FC = () => {
                             : 'bg-green-100 text-green-800 hover:bg-green-200'
                           : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       }`}
-                      onClick={() => isAvailable && setSelectedTime(time)}
+                      onClick={() => {
+                        if (!isAvailable) return;
+                        setSelectedTime(time);
+                        // reset subject and contact inputs when changing time
+                        setSelectedSubjectId(null);
+                        setSelectedContactMethod(null);
+                        setSelectedContactValue('');
+                      }}
                       disabled={!isAvailable}
                     >
                       {time}
@@ -147,47 +165,80 @@ const AppointmentScheduler: React.FC = () => {
           <CardFooter className="flex flex-col gap-4 items-center md:items-start">
             <div className="w-full md:w-auto flex flex-col items-center md:items-start gap-3">
               <div className="w-full md:w-64">
-                {selectedTime ? (
-                  isLoadingSubjects ? (
-                    <div className="text-sm text-gray-500">Carregando matérias...</div>
-                  ) : subjects && subjects.length > 0 ? (
-                    <div className="text-sm">
-                      <span className="mb-1 font-medium block">Matéria</span>
-                      <Select value={selectedSubjectId ? String(selectedSubjectId) : ''} onValueChange={val => setSelectedSubjectId(val ? Number(val) : null)}>
-                        <SelectTrigger>
-                          <SelectValue>{selectedSubjectId ? subjects.find(s => s.id === selectedSubjectId)?.name : 'Selecione a matéria'}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map(s => (
-                            <SelectItem key={s.id} value={String(s.id)}>
-                              {s.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">Nenhuma matéria disponível.</div>
-                  )
+                {selectedMentorId === mentor.id && selectedTime ? (
+                  (() => {
+                    const mentorSubjects = mentor.subjects ?? [];
+                    return mentorSubjects.length > 0 ? (
+                      <div className="text-sm">
+                        <span className="mb-1 font-medium block">Matéria</span>
+                        <Select value={selectedSubjectId ? String(selectedSubjectId) : ''} onValueChange={val => setSelectedSubjectId(val ? Number(val) : null)}>
+                          <SelectTrigger>
+                            <SelectValue>{selectedSubjectId ? mentorSubjects.find(s => s.id === selectedSubjectId)?.name : 'Selecione a matéria'}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {mentorSubjects.map(s => (
+                              <SelectItem key={s.id} value={String(s.id)}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">Nenhuma matéria disponível para este mentor.</div>
+                    );
+                  })()
                 ) : (
-                  <div className="text-sm text-gray-500">Selecione um horário para escolher a matéria</div>
+                  selectedMentorId === mentor.id ? (
+                    <div className="text-sm text-gray-500">Selecione um horário para escolher a matéria</div>
+                  ) : null
                 )}
               </div>
 
+              {selectedMentorId === mentor.id && selectedTime && (
+                <div className="w-full md:w-64 mt-2">
+                  <span className="block text-sm font-medium mb-1">Método de contato</span>
+                  <RadioGroup
+                    value={selectedContactMethod ?? ''}
+                    onValueChange={val => setSelectedContactMethod(val ? (val as 'whatsapp' | 'email') : null)}
+                    className="flex items-center gap-4 mb-2"
+                  >
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <RadioGroupItem value="whatsapp" />
+                      <span>WhatsApp</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <RadioGroupItem value="email" />
+                      <span>Email</span>
+                    </label>
+                  </RadioGroup>
+
+                  <label className="block text-sm">
+                    <span className="text-sm">Contato (número ou e-mail)</span>
+                    <Input
+                      value={selectedContactValue}
+                      onChange={e => setSelectedContactValue(e.target.value)}
+                      placeholder={selectedContactMethod === 'whatsapp' ? 'Digite o número com DDD' : 'Digite o e-mail'}
+                      className="mt-1 w-full"
+                    />
+                  </label>
+                </div>
+              )}
+
               <button
                 className={`w-full md:w-auto px-6 py-3 rounded-lg font-semibold ${
-                  selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId
+                  selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId && selectedContactMethod && selectedContactValue
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId)}
+                disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId && selectedContactMethod && selectedContactValue)}
                 onClick={() => handleSchedule(mentor.id)}
               >
                 AGENDAR CONSULTA
               </button>
             </div>
 
-            {qrCode && !showSuccess && (
+            {mentor.id === selectedMentorId && qrCode && !showSuccess && (
               <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 p-4 bg-gray-50 rounded-lg">
                 <div className="flex flex-col items-center gap-2">
                   <p className="text-sm font-medium text-center">Escaneie o QR Code para pagar via PIX:</p>
@@ -217,11 +268,14 @@ const AppointmentScheduler: React.FC = () => {
                   </div>
                   <button
                     className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    onClick={() => {
+                      onClick={() => {
                       reset();
                       setSelectedMentorId(null);
                       setSelectedDate(dates[0]);
                       setSelectedTime(null);
+                      setSelectedSubjectId(null);
+                      setSelectedContactMethod(null);
+                      setSelectedContactValue('');
                       queryClient.invalidateQueries({ queryKey: ['mentors'] });
                     }}
                   >

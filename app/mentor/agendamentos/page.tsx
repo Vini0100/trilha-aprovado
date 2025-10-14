@@ -46,6 +46,12 @@ export default function MentorAppointmentsPage() {
                 <Clock className="w-5 h-5" />
                 <span className="font-medium">{appt.time}</span>
               </div>
+              {appt.contactMethod && appt.contactValue && (
+                <div className="mt-2 text-sm text-gray-600 sm:ml-auto">
+                  <div className="font-medium">Contato ({appt.contactMethod})</div>
+                  <div>{appt.contactValue}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

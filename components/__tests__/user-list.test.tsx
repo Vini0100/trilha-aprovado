@@ -1,8 +1,8 @@
 import type React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { UserList } from "../user-list";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UserList } from "../user-list";
 
 // Mock do fetch
 global.fetch = vi.fn();

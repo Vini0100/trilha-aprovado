@@ -8,12 +8,16 @@ export async function GET(req: NextRequest) {
   }
   const appointments = await getMentorAppointments(mentorId);
   return NextResponse.json(
-    appointments.map(a => ({
-      id: a.id,
-      date: a.schedule?.day,
-      time: a.schedule?.startTime,
-      studentName: a.student?.name,
-      status: a.status,
-    })),
+    appointments.map(appt => {
+      return {
+        id: appt.id,
+        date: appt.schedule?.day,
+        time: appt.schedule?.startTime,
+        studentName: appt.student?.name,
+        status: appt.status,
+        contactMethod: appt.contactMethod,
+        contactValue: appt.contactValue,
+      };
+    }),
   );
 }

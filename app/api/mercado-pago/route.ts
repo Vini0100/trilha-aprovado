@@ -11,7 +11,7 @@ const client = new MercadoPagoConfig({
 
 export async function POST(request: NextRequest) {
   try {
-    const { studentId, mentorId, subjectId, scheduleId } = await request.json();
+  const { studentId, mentorId, subjectId, scheduleId, contactMethod, contactValue } = await request.json();
 
     const user = await findUserById(studentId);
 
@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
       mentorId,
       subjectId,
       scheduleId,
+      contactMethod,
+      contactValue,
     });
 
     // 2. Criar pagamento pendente no banco

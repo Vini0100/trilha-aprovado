@@ -2,6 +2,7 @@ import { Schedule, User } from '@/lib/generated/prisma';
 
 export type MentorWithRelations = User & {
   schedules: Schedule[];
+  subjects?: { id: number; name: string }[];
 };
 
 export async function createMentorService(data: {

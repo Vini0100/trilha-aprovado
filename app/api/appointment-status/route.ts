@@ -17,6 +17,8 @@ export async function GET(req: NextRequest) {
       status: appointment.status,
       date: appointment.schedule?.day,
       time: appointment.schedule?.startTime,
+      contactMethod: appointment.contactMethod,
+      contactValue: appointment.contactValue,
     });
   }
 
@@ -37,14 +39,18 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json(
-      appointments.map(a => ({
-        id: a.id,
-        date: a.schedule?.day,
-        time: a.schedule?.startTime,
-        mentorName: a.mentor?.user?.name,
-        subjectName: a.subject?.name,
-        status: a.status,
-      })),
+      appointments.map(appt => {
+        return {
+          id: appt.id,
+          date: appt.schedule?.day,
+          time: appt.schedule?.startTime,
+          mentorName: appt.mentor?.user?.name,
+          subjectName: appt.subject?.name,
+          status: appt.status,
+          contactMethod: appt.contactMethod,
+          contactValue: appt.contactValue,
+        };
+      }),
     );
   }
 
