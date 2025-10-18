@@ -10,6 +10,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const MP_WEBHOOK_DEBUG = process.env.MP_WEBHOOK_DEBUG === 'true';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,8 +21,28 @@ export async function POST(req: NextRequest) {
     if (IS_PRODUCTION) {
       const signature = req.headers.get('x-mp-signature');
       const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+
+      // Debug: controlled by MP_WEBHOOK_DEBUG env var
+      if (MP_WEBHOOK_DEBUG) {
+        console.log('MP webhook debug: signature header:', signature);
+        console.log('MP webhook debug: computed hash:', hash);
+        console.log('MP webhook debug: MP_WEBHOOK_KEY length:', MP_WEBHOOK_KEY ? MP_WEBHOOK_KEY.length : 0);
+        console.log('MP webhook debug: bodyText (prefix):', bodyText.slice(0, 1000));
+      }
+
+      if (!signature) {
+        console.error('MP webhook: missing x-mp-signature header');
+        return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+      }
+
       if (hash !== signature) {
-        console.log('Assinatura inválida no webhook');
+        // Minimal production log to avoid leaking secret; if more details are needed, set MP_WEBHOOK_DEBUG=true
+        console.error('Assinatura inválida no webhook (hash !== signature)');
+        if (MP_WEBHOOK_DEBUG) {
+          console.error('Detailed mismatch: signature=', signature);
+          console.error('Detailed mismatch: computedHash=', hash);
+          console.error('Detailed mismatch: bodyText prefix=', bodyText.slice(0, 2000));
+        }
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
