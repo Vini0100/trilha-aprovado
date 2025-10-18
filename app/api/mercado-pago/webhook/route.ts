@@ -16,14 +16,27 @@ export async function POST(req: NextRequest) {
     const bodyText = await req.text();
     const payload = JSON.parse(bodyText);
 
-    // 1️⃣ Validar assinatura só em produção
-    if (IS_PRODUCTION) {
-      const signature = req.headers.get('x-mp-signature');
-      const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
-      if (hash !== signature) {
-        console.log('Assinatura inválida no webhook');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
+    const signature = req.headers.get('x-signature') || req.headers.get('x-mp-signature') || '';
+    const topic = req.headers.get('x-topic') || payload.type || '';
+    const id = req.headers.get('x-id') || (payload.data?.id ?? '');
+
+    let hash = '';
+
+    if (signature && MP_WEBHOOK_KEY) {
+      // novo formato
+      hash = crypto
+        .createHmac('sha256', MP_WEBHOOK_KEY)
+        .update(`${id}${topic}${bodyText}`)
+        .digest('base64');
+    } else {
+      // formato antigo
+      hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+    }
+
+    if (hash !== signature) {
+      console.log('Assinatura inválida no webhook');
+      console.log({ id, topic, signature, hash });
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     // 2️⃣ Tratar pagamentos PIX
