@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
     if (signatureHeader !== expectedSignature) {
       console.log('Assinatura inválida no webhook');
       console.log({ id, topic, ts, signatureHeader, expectedSignature });
+      console.log('String usada para assinar:', `${id}${topic}${ts}${bodyText}`.slice(0, 200));
+
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
