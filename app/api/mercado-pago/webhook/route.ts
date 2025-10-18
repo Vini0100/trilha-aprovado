@@ -16,13 +16,17 @@ export async function POST(req: NextRequest) {
     const bodyText = await req.text();
     const payload = JSON.parse(bodyText);
 
+    const signature = req.headers.get('x-mp-signature');
+    const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+
     // 1️⃣ Validar assinatura só em produção
     if (IS_PRODUCTION) {
-      const signature = req.headers.get('x-mp-signature');
-      const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
       if (hash !== signature) {
         console.log('Assinatura inválida no webhook');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        return NextResponse.json(
+          { error: 'Invalid signature', details: { signature, hash, bodyText } },
+          { status: 401 },
+        );
       }
     }
 
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, details: { signature, hash, bodyText } });
   } catch (err) {
     console.error('Erro no webhook Mercado Pago:', err);
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
