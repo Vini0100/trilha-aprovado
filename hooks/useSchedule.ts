@@ -1,3 +1,12 @@
+import { removeMentorSchedulesService } from '@/services/scheduleService';
+export function useRemoveSchedules(mentorId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (schedules: { day: string; startTime: string; endTime: string }[]) =>
+      removeMentorSchedulesService(mentorId, schedules),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mentorSchedules', mentorId] }),
+  });
+}
 import {
   changeScheduleStatusService,
   createMentorSchedulesService,

@@ -7,12 +7,14 @@ import { ThemeProvider } from '@/providers/ThemeProvider';
 import { Header } from '@/components/Header';
 import { AuthProvider } from '@/providers/SessionProvider';
 import { Toaster } from '@/components/ui/sonner';
+import { MainSidebar } from '@/components/MainSidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Next.js App',
-  description: 'Aplicação Next.js com Tailwind, Vitest, React Query e shadcn/ui',
+  title: 'Trilha Aprovado',
+  description: 'Plataforma de mentoria online para concursos públicos',
   generator: 'v0.app',
 };
 
@@ -22,15 +24,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
           <QueryProvider>
             <AuthProvider>
-              <Header />
-              {children}
-              <Toaster />
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <MainSidebar />
+                  <SidebarInset className="flex-1 w-full">
+                    <Header />
+                    <main className="flex-1 p-4 w-full overflow-auto">
+                      {children}
+                    </main>
+                  </SidebarInset>
+                </div>
+                <Toaster />
+              </SidebarProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

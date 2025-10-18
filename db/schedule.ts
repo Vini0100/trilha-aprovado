@@ -32,3 +32,22 @@ export async function changeScheduleStatus(
     data: { status },
   });
 }
+
+export async function removeMentorSchedules(
+  mentorId: number,
+  schedules: { day: string; startTime: string; endTime: string }[],
+) {
+  const deleted = await Promise.all(
+    schedules.map(s =>
+      prisma.schedule.deleteMany({
+        where: {
+          mentorId,
+          day: s.day,
+          startTime: s.startTime,
+          endTime: s.endTime,
+        },
+      }),
+    ),
+  );
+  return deleted;
+}

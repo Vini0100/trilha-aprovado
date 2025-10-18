@@ -54,8 +54,15 @@ export async function findAllMentors() {
       user: {
         select: { name: true, phone: true },
       },
+      subjects: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       schedules: {
         select: {
+          id: true,
           day: true, // formato: "YYYY-MM-DD" ou "Monday"
           startTime: true, // "08:00"
           endTime: true, // "09:00"
@@ -71,5 +78,6 @@ export async function findAllMentors() {
     phone: m.user.phone,
     bio: m.bio,
     schedules: m.schedules,
+    subjects: m.subjects,
   }));
 }
