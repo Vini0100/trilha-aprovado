@@ -8,23 +8,23 @@ import {
 } from '@/db/payment';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+// const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
+// const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export async function POST(req: NextRequest) {
   try {
     const bodyText = await req.text();
     const payload = JSON.parse(bodyText);
 
-    // 1️⃣ Validar assinatura só em produção
-    if (IS_PRODUCTION) {
-      const signature = req.headers.get('x-mp-signature');
-      const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
-      if (hash !== signature) {
-        console.log('Assinatura inválida no webhook');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
-    }
+    // // 1️⃣ Validar assinatura só em produção
+    // if (IS_PRODUCTION) {
+    //   const signature = req.headers.get('x-mp-signature');
+    //   const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+    //   if (hash !== signature) {
+    //     console.log('Assinatura inválida no webhook');
+    //     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    //   }
+    // }
 
     // 2️⃣ Tratar pagamentos PIX
     if (payload.type === 'payment') {
