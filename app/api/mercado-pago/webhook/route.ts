@@ -37,9 +37,27 @@ export async function POST(req: NextRequest) {
     const expectedSignature = `ts=${ts},v1=${hash}`;
 
     if (signatureHeader !== expectedSignature) {
-      console.log('Assinatura inválida no webhook');
-      console.log({ id, topic, ts, signatureHeader, expectedSignature });
-      console.log('String usada para assinar:', `${id}${topic}${ts}${bodyText}`.slice(0, 200));
+      console.log(
+        'Assinatura inválida no webhook',
+        JSON.stringify(
+          {
+            id,
+            topic,
+            ts,
+            signatureHeader,
+            expectedSignature,
+            hash,
+            keyPreview: MP_WEBHOOK_KEY.slice(0, 4) + '...' + MP_WEBHOOK_KEY.slice(-4),
+            bodyLength: bodyText.length,
+            bodyStart: bodyText.slice(0, 100),
+            bodyEnd: bodyText.slice(-100),
+            dataUsedToSignPreview: data.slice(0, 100),
+            dataUsedToSignEnd: data.slice(-100),
+          },
+          null,
+          2,
+        ),
+      );
 
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }

@@ -20,7 +20,4 @@ export default withAuth(
 // Protege todas as rotas que começam com /mentor
 export const config = {
   matcher: ['/mentor/:path*'],
-  api: {
-    bodyParser: false, // Garante corpo cru em ambientes que ainda processam (Vercel included)
-  },
 };
