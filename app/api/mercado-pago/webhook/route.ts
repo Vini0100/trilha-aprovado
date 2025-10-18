@@ -6,6 +6,7 @@ import {
   updateAppointmentStatus,
   updateScheduleStatus,
 } from '@/db/payment';
+import { pushLog } from '@/lib/webhookDebug';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
@@ -24,14 +25,47 @@ export async function POST(req: NextRequest) {
 
       // Debug: controlled by MP_WEBHOOK_DEBUG env var
       if (MP_WEBHOOK_DEBUG) {
-        console.log('MP webhook debug: signature header:', signature);
-        console.log('MP webhook debug: computed hash:', hash);
-        console.log('MP webhook debug: MP_WEBHOOK_KEY length:', MP_WEBHOOK_KEY ? MP_WEBHOOK_KEY.length : 0);
-        console.log('MP webhook debug: bodyText (prefix):', bodyText.slice(0, 1000));
+        const meta = {
+          signature,
+          computedHash: hash,
+          keyLength: MP_WEBHOOK_KEY ? MP_WEBHOOK_KEY.length : 0,
+        };
+        pushLog({ level: 'debug', message: 'MP webhook debug: header vs computed', meta });
       }
 
       if (!signature) {
         console.error('MP webhook: missing x-mp-signature header');
+        if (MP_WEBHOOK_DEBUG) {
+          pushLog({
+            level: 'error',
+            message: 'MP webhook: missing x-mp-signature header',
+            meta: { url: req.url },
+          });
+        }
+        if (MP_WEBHOOK_DEBUG) {
+          // Log headers and request meta for investigation (avoid logging secrets)
+          try {
+            const headersObj: Record<string, string | null> = {};
+            for (const [k, v] of req.headers) headersObj[k] = v;
+            pushLog({
+              level: 'debug',
+              message: 'MP webhook missing signature - headers',
+              meta: {
+                headers: headersObj,
+                url: req.url,
+                method: req.method,
+                xff: req.headers.get('x-forwarded-for'),
+                bodyPrefix: bodyText.slice(0, 2000),
+              },
+            });
+          } catch (e) {
+            pushLog({
+              level: 'error',
+              message: 'MP webhook debug: error while logging headers',
+              meta: { error: String(e) },
+            });
+          }
+        }
         return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
       }
 
@@ -39,9 +73,11 @@ export async function POST(req: NextRequest) {
         // Minimal production log to avoid leaking secret; if more details are needed, set MP_WEBHOOK_DEBUG=true
         console.error('Assinatura inválida no webhook (hash !== signature)');
         if (MP_WEBHOOK_DEBUG) {
-          console.error('Detailed mismatch: signature=', signature);
-          console.error('Detailed mismatch: computedHash=', hash);
-          console.error('Detailed mismatch: bodyText prefix=', bodyText.slice(0, 2000));
+          pushLog({
+            level: 'error',
+            message: 'Assinatura inválida no webhook (hash !== signature)',
+            meta: { signature, computedHash: hash, bodyPrefix: bodyText.slice(0, 2000) },
+          });
         }
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
