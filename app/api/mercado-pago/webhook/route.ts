@@ -16,26 +16,29 @@ export async function POST(req: NextRequest) {
     const bodyText = await req.text();
     const payload = JSON.parse(bodyText);
 
-    const signature = req.headers.get('x-signature') || req.headers.get('x-mp-signature') || '';
+    // Pega os headers necessários
+    const signatureHeader = req.headers.get('x-signature') || '';
     const topic = req.headers.get('x-topic') || payload.type || '';
     const id = req.headers.get('x-id') || (payload.data?.id ?? '');
+    const ts = signatureHeader.split(',')[0]?.split('=')[1] || ''; // extrai o timestamp
 
-    let hash = '';
-
-    if (signature && MP_WEBHOOK_KEY) {
-      // novo formato
-      hash = crypto
-        .createHmac('sha256', MP_WEBHOOK_KEY)
-        .update(`${id}${topic}${bodyText}`)
-        .digest('base64');
-    } else {
-      // formato antigo
-      hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(bodyText).digest('hex');
+    if (!signatureHeader || !MP_WEBHOOK_KEY) {
+      console.log('Webhook sem assinatura ou sem chave configurada');
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
     }
 
-    if (hash !== signature) {
+    // Monta a string a ser assinada
+    const data = `${id}${topic}${ts}${bodyText}`;
+
+    // Gera o HMAC SHA256 em HEX (igual ao Mercado Pago)
+    const hash = crypto.createHmac('sha256', MP_WEBHOOK_KEY).update(data).digest('hex');
+
+    // Monta a assinatura esperada
+    const expectedSignature = `ts=${ts},v1=${hash}`;
+
+    if (signatureHeader !== expectedSignature) {
       console.log('Assinatura inválida no webhook');
-      console.log({ id, topic, signature, hash });
+      console.log({ id, topic, ts, signatureHeader, expectedSignature });
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
