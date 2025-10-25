@@ -35,6 +35,7 @@ export default [
     rules: {
       ...typescriptPlugin.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
@@ -71,6 +72,17 @@ export default [
     },
   },
 
+  // Relaxed rules for test files
+  {
+    files: ['**/__tests__/**/*.{js,jsx,ts,tsx}', 'test/**/*.{js,jsx,ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'react/display-name': 'off',
+      'no-undef': 'off',
+    },
+  },
+
   // Ignorar arquivos
   {
     ignores: [
@@ -81,6 +93,8 @@ export default [
       'coverage/',
       '*.min.js',
       'components/ui/**',
+      'lib/generated/**',
+      'tailwind.config.ts',
     ],
   },
 ];
