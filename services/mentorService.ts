@@ -3,6 +3,8 @@ import { Schedule, User } from '@/lib/generated/prisma';
 export type MentorWithRelations = User & {
   schedules: Schedule[];
   subjects?: { id: number; name: string }[];
+  acceptsEssays?: boolean;
+  bio?: string | null;
 };
 
 export async function createMentorService(data: {
@@ -12,6 +14,7 @@ export async function createMentorService(data: {
   phone?: string;
   bio: string;
   subjectsIds: number[];
+  acceptsEssays?: boolean;
 }) {
   const res = await fetch('/api/register/mentor', {
     method: 'POST',

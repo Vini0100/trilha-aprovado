@@ -6,6 +6,7 @@ import {
   updateAppointmentStatus,
   updateScheduleStatus,
 } from '@/db/payment';
+import { findEssayByProviderId, updateEssayStatus } from '@/db/essay';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 // const MP_WEBHOOK_KEY = process.env.MP_WEBHOOK_KEY || ''; // sua assinatura secreta
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
 
       console.log(`Pagamento atualizado: ${providerId}, status: ${status}`);
 
-      // 4️⃣ Atualizar Appointment e Schedule
+      // 4️⃣ Atualizar Appointment e Schedule (se aplicável)
       const appointment = await findAppointmentByProviderId(providerId);
 
       if (appointment) {
@@ -71,6 +72,18 @@ export async function POST(req: NextRequest) {
         );
         console.log(
           `Appointment ${appointment.id} e Schedule ${appointment.scheduleId} atualizados`,
+        );
+      }
+
+      // 5️⃣ Atualizar Essay (se aplicável)
+      const essay = await findEssayByProviderId(providerId);
+      if (essay) {
+        await updateEssayStatus(
+          essay.id,
+          status === 'approved' ? 'aguardando_revisao' : 'pending_payment',
+        );
+        console.log(
+          `Essay ${essay.id} atualizado para status ${status === 'approved' ? 'aguardando_revisao' : 'pending_payment'}`,
         );
       }
     }

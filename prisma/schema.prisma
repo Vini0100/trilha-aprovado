@@ -25,6 +25,7 @@ model User {
   createdAt DateTime @default(now())
   mentorProfile Mentor?
   appointments  Appointment[]
+  essays        Essay[]
 }
 
 // Mentores
@@ -33,9 +34,11 @@ model Mentor {
   user         User     @relation(fields: [userId], references: [id])
   userId       Int      @unique
   bio          String? 
+  acceptsEssays Boolean  @default(false)
   subjects     Subject[] @relation("MentorSubjects")
   schedules    Schedule[]
   appointments Appointment[]
+  essays       Essay[]
 }
 
 // Matérias
@@ -91,13 +94,39 @@ model Appointment {
 
 model Payment {
   id            Int         @id @default(autoincrement())
-  appointment   Appointment @relation(fields: [appointmentId], references: [id])
-  appointmentId Int         @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  appointmentId Int?         @unique
+
+  essay         Essay?      @relation(fields: [essayId], references: [id])
+  essayId       Int?         @unique
 
   provider      String      @default("mercadopago")
-providerId      String      @unique
+  providerId    String      @unique
   status        String      @default("pending") // pending, approved, rejected
   amount        Float
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+// Redações (ensaios) para correção
+model Essay {
+  id           Int      @id @default(autoincrement())
+  student      User     @relation(fields: [studentId], references: [id])
+  studentId    Int
+
+  mentor       Mentor   @relation(fields: [mentorId], references: [id])
+  mentorId     Int
+
+  title        String?
+  text         String
+  status       String   @default("pending_payment") // pending_payment -> aguardando_revisao -> finalizada
+  submittedAt  DateTime?
+  correctedAt  DateTime?
+  grade        Float?
+  feedback     String?
+
+  payment      Payment?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

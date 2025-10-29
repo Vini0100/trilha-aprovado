@@ -4,7 +4,7 @@ import { createMentor } from '@/db/mentor';
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, phone, bio, subjectsIds } = await req.json();
+    const { name, email, password, phone, bio, subjectsIds, acceptsEssays } = await req.json();
 
     if (!name || !email || !password || !bio || !subjectsIds?.length) {
       return NextResponse.json({ error: 'Preencha todos os campos obrigatórios' }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     // Reaproveita a função de criar usuário
     const user = await createUser({ name, email, password, phone, role: 'mentor' });
 
-    const mentor = await createMentor(user.id, bio, subjectsIds);
+    const mentor = await createMentor(user.id, bio, subjectsIds, Boolean(acceptsEssays));
 
     return NextResponse.json({ user, mentor }, { status: 201 });
   } catch (error) {
