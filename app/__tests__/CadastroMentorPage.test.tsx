@@ -42,14 +42,14 @@ describe('Cadastro Mentor Page', () => {
 
     await waitFor(() => {
       expect(mutate).toHaveBeenCalledWith(
-        {
+        expect.objectContaining({
           name: 'Prof Ana',
           email: 'ana@mail.com',
           password: '123456',
           bio: 'Biografia longa',
           phone: '119',
           subjectsIds: [1],
-        },
+        }),
         expect.any(Object),
       );
     });

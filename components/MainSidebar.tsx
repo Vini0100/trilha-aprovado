@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { 
-  Home, 
-  User, 
-  Calendar, 
-  BookOpen, 
-  CalendarCheck,
-  PlusCircle
-} from "lucide-react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { Home, User, Calendar, BookOpen, CalendarCheck, PlusCircle, FileText } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -21,7 +14,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarSeparator,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
 
 /**
  * Sidebar principal da aplicação
@@ -31,57 +24,71 @@ import {
 export function MainSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  
+
   // Verifica se o usuário é mentor
   const isMentor = session?.user && session.user.role === 'mentor';
 
   // Rotas gerais disponíveis para todos os usuários
   const generalRoutes = [
     {
-      label: "Início",
-      href: "/",
+      label: 'Início',
+      href: '/',
       icon: Home,
     },
   ];
 
   // Rotas para usuários logados
-  const userRoutes = session ? [
-    {
-      label: "Meus Agendamentos",
-      href: "/meus-agendamentos",
-      icon: Calendar,
-    },
-  ] : [
-    {
-      label: "Entrar",
-      href: "/entrar",
-      icon: User,
-    },
-    {
-      label: "Cadastro Usuário",
-      href: "/cadastro/usuario",
-      icon: PlusCircle,
-    },
-    {
-      label: "Cadastro Mentor",
-      href: "/cadastro/mentor",
-      icon: BookOpen,
-    },
-  ];
+  const userRoutes = session
+    ? [
+        {
+          label: 'Meus Agendamentos',
+          href: '/meus-agendamentos',
+          icon: Calendar,
+        },
+        {
+          label: 'Minhas Redações',
+          href: '/minhas-redacoes',
+          icon: FileText,
+        },
+      ]
+    : [
+        {
+          label: 'Entrar',
+          href: '/entrar',
+          icon: User,
+        },
+        {
+          label: 'Cadastro Usuário',
+          href: '/cadastro/usuario',
+          icon: PlusCircle,
+        },
+        {
+          label: 'Cadastro Mentor',
+          href: '/cadastro/mentor',
+          icon: BookOpen,
+        },
+      ];
 
   // Rotas exclusivas para mentores
-  const mentorRoutes = isMentor ? [
-    {
-      label: "Dashboard",
-      href: "/mentor/dashboard",
-      icon: BookOpen,
-    },
-    {
-      label: "Agendamentos",
-      href: "/mentor/agendamentos",
-      icon: CalendarCheck,
-    },
-  ] : [];
+  const mentorRoutes = isMentor
+    ? [
+        {
+          label: 'Dashboard',
+          href: '/mentor/dashboard',
+          icon: BookOpen,
+        },
+        {
+          label: 'Agendamentos',
+          href: '/mentor/agendamentos',
+          icon: CalendarCheck,
+        },
+        {
+          label: 'Redações',
+          href: '/mentor/redacoes',
+          icon: FileText,
+        },
+      ]
+    : [];
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-background">
@@ -91,7 +98,7 @@ export function MainSidebar() {
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {generalRoutes.map((item) => {
+              {generalRoutes.map(item => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
@@ -113,12 +120,10 @@ export function MainSidebar() {
 
         {/* Área do Usuário */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            {session ? "Minha Conta" : "Acesso"}
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>{session ? 'Minha Conta' : 'Acesso'}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {userRoutes.map((item) => {
+              {userRoutes.map(item => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
@@ -144,7 +149,7 @@ export function MainSidebar() {
               <SidebarGroupLabel>Área do Mentor</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {mentorRoutes.map((item) => {
+                  {mentorRoutes.map(item => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href;
                     return (

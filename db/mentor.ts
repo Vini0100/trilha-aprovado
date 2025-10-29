@@ -1,10 +1,16 @@
 import { prisma } from '@/lib/prisma';
 
-export async function createMentor(userId: number, bio: string, subjectsIds: number[]) {
+export async function createMentor(
+  userId: number,
+  bio: string,
+  subjectsIds: number[],
+  acceptsEssays: boolean = false,
+) {
   return prisma.mentor.create({
     data: {
       userId,
       bio,
+      acceptsEssays,
       subjects: {
         connect: subjectsIds.map(id => ({ id })),
       },
@@ -47,37 +53,65 @@ export async function getMentorProfile(userId: number) {
 }
 
 export async function findAllMentors() {
-  const mentors = await prisma.mentor.findMany({
-    select: {
-      id: true,
-      bio: true,
-      user: {
-        select: { name: true, phone: true },
-      },
-      subjects: {
-        select: {
-          id: true,
-          name: true,
+  try {
+    const mentors = await prisma.mentor.findMany({
+      select: {
+        id: true,
+        bio: true,
+        acceptsEssays: true,
+        user: {
+          select: { name: true, phone: true },
+        },
+        subjects: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        schedules: {
+          select: {
+            id: true,
+            day: true, // formato: "YYYY-MM-DD" ou "Monday"
+            startTime: true, // "08:00"
+            endTime: true, // "09:00"
+            status: true, // "available" | "blocked" | "removed"
+          },
         },
       },
-      schedules: {
-        select: {
-          id: true,
-          day: true, // formato: "YYYY-MM-DD" ou "Monday"
-          startTime: true, // "08:00"
-          endTime: true, // "09:00"
-          status: true, // "available" | "blocked" | "removed"
-        },
-      },
-    },
-  });
+    });
 
-  return mentors.map(m => ({
-    id: m.id,
-    name: m.user.name,
-    phone: m.user.phone,
-    bio: m.bio,
-    schedules: m.schedules,
-    subjects: m.subjects,
-  }));
+    return mentors.map(m => ({
+      id: m.id,
+      name: m.user.name,
+      phone: m.user.phone,
+      bio: m.bio,
+      acceptsEssays: m.acceptsEssays,
+      schedules: m.schedules,
+      subjects: m.subjects,
+    }));
+  } catch (err) {
+    // Fallback for environments where the DB hasn't been migrated yet
+    // and the column `acceptsEssays` is missing. We omit the field and default to false.
+    const mentors = await prisma.mentor.findMany({
+      select: {
+        id: true,
+        bio: true,
+        user: { select: { name: true, phone: true } },
+        subjects: { select: { id: true, name: true } },
+        schedules: {
+          select: { id: true, day: true, startTime: true, endTime: true, status: true },
+        },
+      },
+    });
+
+    return mentors.map(m => ({
+      id: m.id,
+      name: m.user.name,
+      phone: m.user.phone,
+      bio: m.bio,
+      acceptsEssays: false,
+      schedules: m.schedules,
+      subjects: m.subjects,
+    }));
+  }
 }

@@ -45,6 +45,7 @@ export default function MentorRegisterPage() {
       bio: data.bio,
       phone: data.phone,
       subjectsIds: data.subjects,
+      acceptsEssays: (data as any).acceptsEssays ?? false,
     };
 
     cadastrarMentor.mutate(payload, {
@@ -115,6 +116,11 @@ export default function MentorRegisterPage() {
         )}
 
         {errors.subjects && <span className="text-red-500">{errors.subjects.message}</span>}
+
+        <label className="flex items-center gap-2 mt-2">
+          <input type="checkbox" {...register('acceptsEssays' as any)} />
+          <span>Aceito corrigir redações</span>
+        </label>
 
         <Button type="submit" className="w-full" disabled={cadastrarMentor.isPending}>
           {cadastrarMentor.isPending ? 'Cadastrando...' : 'Cadastrar Mentor'}

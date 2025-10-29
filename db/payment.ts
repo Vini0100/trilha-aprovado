@@ -65,3 +65,29 @@ export async function updatePaymentProviderId({
     data: { providerId },
   });
 }
+
+export async function findOrCreateEssayPayment({
+  essayId,
+  amount,
+}: {
+  essayId: number;
+  amount: number;
+}) {
+  let payment = await prisma.payment.findUnique({
+    where: { essayId },
+  });
+
+  if (!payment) {
+    payment = await prisma.payment.create({
+      data: {
+        essayId,
+        provider: 'mercadopago',
+        providerId: `temp-${Date.now()}`,
+        status: 'pending',
+        amount,
+      },
+    });
+  }
+
+  return payment;
+}

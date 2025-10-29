@@ -47,7 +47,7 @@ describe('RootLayout', () => {
 
     render(
       // RootLayout is a React component that accepts children
-      // eslint-disable-next-line react/no-children-prop
+       
       // @ts-ignore
       <RootLayout children={<div>Conteúdo de Teste</div>} />,
     );
