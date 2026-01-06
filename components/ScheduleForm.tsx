@@ -14,6 +14,14 @@ interface HourBlock {
   endTime: string;
 }
 
+// Função para formatar data sem problemas de timezone
+const formatDateToYYYYMMDD = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
   const createSchedules = useCreateSchedules(mentorId);
   const removeSchedules = useRemoveSchedules(mentorId);
@@ -39,13 +47,14 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
 
   const toggleHour = (time: string) => {
     if (!selectedDate) return;
-    const dayKey = selectedDate.toISOString().split('T')[0];
+    const dayKey = formatDateToYYYYMMDD(selectedDate);
     const existing = selectedHours[dayKey] || [];
     const idx = existing.findIndex(h => h.startTime === time);
     if (idx >= 0) {
       existing.splice(idx, 1);
     } else {
-      existing.push({ startTime: time, endTime: `${parseInt(time.split(':')[0]) + 1}:00` });
+      const nextHour = parseInt(time.split(':')[0]) + 1;
+      existing.push({ startTime: time, endTime: `${nextHour.toString().padStart(2, '0')}:00` });
     }
     setSelectedHours({ ...selectedHours, [dayKey]: existing });
   };
@@ -125,7 +134,7 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
         <div className="overflow-x-auto">
           <div className="flex space-x-2 min-w-max">
             {dates.map((d, idx) => {
-              const dayKey = d.toISOString().split('T')[0];
+              const dayKey = formatDateToYYYYMMDD(d);
               const isSelected = selectedDate?.toDateString() === d.toDateString();
               return (
                 <div
@@ -152,7 +161,7 @@ export default function ScheduleForm({ mentorId }: ScheduleFormProps) {
             <h4 className="font-semibold mb-2">Horários para {formatDate(selectedDate)}</h4>
             <div className="grid grid-cols-6 gap-2">
               {allTimes.map(time => {
-                const dayKey = selectedDate.toISOString().split('T')[0];
+                const dayKey = formatDateToYYYYMMDD(selectedDate);
                 const selected = selectedHours[dayKey]?.some(h => h.startTime === time);
                 return (
                   <button

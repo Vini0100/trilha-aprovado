@@ -20,14 +20,22 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { mentorId, schedules } = await req.json();
-  if (!mentorId || !schedules) return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
+    const body = await req.json();
+    const { mentorId, schedules } = body;
+    if (!mentorId || !schedules) {
+      return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
+    }
 
-  const created = await createMentorSchedules(mentorId, schedules);
-  return NextResponse.json(created);
+    const created = await createMentorSchedules(mentorId, schedules);
+    return NextResponse.json(created);
+  } catch (error) {
+    console.error('Erro ao criar schedules:', error);
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
