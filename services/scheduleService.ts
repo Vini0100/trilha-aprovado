@@ -26,15 +26,16 @@ export async function createMentorSchedulesService(
   });
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error?.error || 'Erro ao criar horários');
+    const errorText = await res.text();
+    try {
+      const error = JSON.parse(errorText);
+      throw new Error(error?.error || 'Erro ao criar horários');
+    } catch (e) {
+      throw new Error('Erro ao criar horários: ' + errorText);
+    }
   }
 
   return res.json();
-}
-
-export async function getMentorSchedulesService(mentorId: number) {
-  const res = await fetch(`/api/schedule?mentorId=${mentorId}`);
   if (!res.ok) throw new Error('Erro ao buscar horários');
   return res.json();
 }

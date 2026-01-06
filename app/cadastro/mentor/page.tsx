@@ -18,6 +18,7 @@ const cadastroMentorSchema = z.object({
   phone: z.string().optional(),
   bio: z.string().min(10, 'A bio precisa ter pelo menos 10 caracteres'),
   subjects: z.array(z.number()).min(1, 'Selecione pelo menos uma matéria'),
+  acceptsEssays: z.boolean().default(false),
 });
 
 // Tipagem do formulário
@@ -45,7 +46,7 @@ export default function MentorRegisterPage() {
       bio: data.bio,
       phone: data.phone,
       subjectsIds: data.subjects,
-      acceptsEssays: (data as any).acceptsEssays ?? false,
+      acceptsEssays: data.acceptsEssays,
     };
 
     cadastrarMentor.mutate(payload, {
@@ -118,7 +119,7 @@ export default function MentorRegisterPage() {
         {errors.subjects && <span className="text-red-500">{errors.subjects.message}</span>}
 
         <label className="flex items-center gap-2 mt-2">
-          <input type="checkbox" {...register('acceptsEssays' as any)} />
+          <input type="checkbox" {...register('acceptsEssays')} />
           <span>Aceito corrigir redações</span>
         </label>
 

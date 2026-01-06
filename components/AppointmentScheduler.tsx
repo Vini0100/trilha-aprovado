@@ -4,13 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { useMentors } from '@/hooks/useMentor';
 // subjects are loaded per-mentor via the mentors API (mentor.subjects)
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from './ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Input } from './ui/input';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,6 +16,14 @@ const AppointmentScheduler: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: mentors, isLoading } = useMentors();
   const { data: session } = useSession();
+
+  // Função para formatar data sem problemas de timezone
+  const formatDateToYYYYMMDD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   const today = new Date();
   const dates: Date[] = Array.from({ length: 14 }, (_, i) => {
@@ -38,7 +40,9 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(dates[0]);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
-  const [selectedContactMethod, setSelectedContactMethod] = useState<'whatsapp' | 'email' | null>(null);
+  const [selectedContactMethod, setSelectedContactMethod] = useState<'whatsapp' | 'email' | null>(
+    null,
+  );
   const [selectedContactValue, setSelectedContactValue] = useState<string>('');
 
   const formatDate = (date: Date) =>
@@ -47,7 +51,7 @@ const AppointmentScheduler: React.FC = () => {
     date.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
 
   const mentorSchedulesForDate = (mentor: MentorWithRelations, date: Date) => {
-    const dayKey = date.toISOString().split('T')[0]; // "yyyy-MM-dd"
+    const dayKey = formatDateToYYYYMMDD(date);
     return mentor.schedules.filter(s => s.day === dayKey && s.status === 'available');
   };
 
@@ -58,7 +62,7 @@ const AppointmentScheduler: React.FC = () => {
 
     const mentor = mentors?.find(m => m.id === mentorId);
     const availableSchedules = mentor?.schedules.filter(
-      s => s.day === selectedDate.toISOString().split('T')[0] && s.status === 'available',
+      s => s.day === formatDateToYYYYMMDD(selectedDate) && s.status === 'available',
     );
     const schedule = availableSchedules?.find(s => s.startTime === selectedTime);
     if (!schedule) {
@@ -109,13 +113,13 @@ const AppointmentScheduler: React.FC = () => {
                         isSelected ? 'bg-blue-100 border-blue-500' : 'bg-gray-100'
                       }`}
                       onClick={() => {
-                          setSelectedDate(date);
-                          setSelectedMentorId(mentor.id);
-                          setSelectedTime(null);
-                          setSelectedSubjectId(null);
-                          setSelectedContactMethod(null);
-                          setSelectedContactValue('');
-                        }}
+                        setSelectedDate(date);
+                        setSelectedMentorId(mentor.id);
+                        setSelectedTime(null);
+                        setSelectedSubjectId(null);
+                        setSelectedContactMethod(null);
+                        setSelectedContactValue('');
+                      }}
                     >
                       <div className="text-xs font-semibold">{formatWeekday(date)}</div>
                       <div className="text-sm">{formatDate(date)}</div>
@@ -171,9 +175,16 @@ const AppointmentScheduler: React.FC = () => {
                     return mentorSubjects.length > 0 ? (
                       <div className="text-sm">
                         <span className="mb-1 font-medium block">Matéria</span>
-                        <Select value={selectedSubjectId ? String(selectedSubjectId) : ''} onValueChange={val => setSelectedSubjectId(val ? Number(val) : null)}>
+                        <Select
+                          value={selectedSubjectId ? String(selectedSubjectId) : ''}
+                          onValueChange={val => setSelectedSubjectId(val ? Number(val) : null)}
+                        >
                           <SelectTrigger>
-                            <SelectValue>{selectedSubjectId ? mentorSubjects.find(s => s.id === selectedSubjectId)?.name : 'Selecione a matéria'}</SelectValue>
+                            <SelectValue>
+                              {selectedSubjectId
+                                ? mentorSubjects.find(s => s.id === selectedSubjectId)?.name
+                                : 'Selecione a matéria'}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {mentorSubjects.map(s => (
@@ -185,14 +196,16 @@ const AppointmentScheduler: React.FC = () => {
                         </Select>
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500">Nenhuma matéria disponível para este mentor.</div>
+                      <div className="text-sm text-gray-500">
+                        Nenhuma matéria disponível para este mentor.
+                      </div>
                     );
                   })()
-                ) : (
-                  selectedMentorId === mentor.id ? (
-                    <div className="text-sm text-gray-500">Selecione um horário para escolher a matéria</div>
-                  ) : null
-                )}
+                ) : selectedMentorId === mentor.id ? (
+                  <div className="text-sm text-gray-500">
+                    Selecione um horário para escolher a matéria
+                  </div>
+                ) : null}
               </div>
 
               {selectedMentorId === mentor.id && selectedTime && (
@@ -200,7 +213,9 @@ const AppointmentScheduler: React.FC = () => {
                   <span className="block text-sm font-medium mb-1">Método de contato</span>
                   <RadioGroup
                     value={selectedContactMethod ?? ''}
-                    onValueChange={val => setSelectedContactMethod(val ? (val as 'whatsapp' | 'email') : null)}
+                    onValueChange={val =>
+                      setSelectedContactMethod(val ? (val as 'whatsapp' | 'email') : null)
+                    }
                     className="flex items-center gap-4 mb-2"
                   >
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -218,7 +233,11 @@ const AppointmentScheduler: React.FC = () => {
                     <Input
                       value={selectedContactValue}
                       onChange={e => setSelectedContactValue(e.target.value)}
-                      placeholder={selectedContactMethod === 'whatsapp' ? 'Digite o número com DDD' : 'Digite o e-mail'}
+                      placeholder={
+                        selectedContactMethod === 'whatsapp'
+                          ? 'Digite o número com DDD'
+                          : 'Digite o e-mail'
+                      }
                       className="mt-1 w-full"
                     />
                   </label>
@@ -227,11 +246,25 @@ const AppointmentScheduler: React.FC = () => {
 
               <button
                 className={`w-full md:w-auto px-6 py-3 rounded-lg font-semibold ${
-                  selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId && selectedContactMethod && selectedContactValue
+                  selectedMentorId === mentor.id &&
+                  selectedDate &&
+                  selectedTime &&
+                  selectedSubjectId &&
+                  selectedContactMethod &&
+                  selectedContactValue
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                disabled={!(selectedMentorId === mentor.id && selectedDate && selectedTime && selectedSubjectId && selectedContactMethod && selectedContactValue)}
+                disabled={
+                  !(
+                    selectedMentorId === mentor.id &&
+                    selectedDate &&
+                    selectedTime &&
+                    selectedSubjectId &&
+                    selectedContactMethod &&
+                    selectedContactValue
+                  )
+                }
                 onClick={() => handleSchedule(mentor.id)}
               >
                 AGENDAR CONSULTA
@@ -241,14 +274,18 @@ const AppointmentScheduler: React.FC = () => {
             {mentor.id === selectedMentorId && qrCode && !showSuccess && (
               <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 p-4 bg-gray-50 rounded-lg">
                 <div className="flex flex-col items-center gap-2">
-                  <p className="text-sm font-medium text-center">Escaneie o QR Code para pagar via PIX:</p>
+                  <p className="text-sm font-medium text-center">
+                    Escaneie o QR Code para pagar via PIX:
+                  </p>
                   <img src={qrCode} alt="QR Code Pix" className="w-48 h-48 border rounded-lg" />
                 </div>
                 <div className="flex flex-col items-center lg:items-start gap-2 lg:ml-4">
                   <div className="text-center lg:text-left">
                     <p className="text-lg font-semibold text-gray-700">Valor a pagar:</p>
                     <p className="text-2xl font-bold text-green-600">
-                      {paymentAmount ? `R$ ${paymentAmount.toFixed(2).replace('.', ',')}` : 'R$ 0,00'}
+                      {paymentAmount
+                        ? `R$ ${paymentAmount.toFixed(2).replace('.', ',')}`
+                        : 'R$ 0,00'}
                     </p>
                   </div>
                   <div className="text-sm text-gray-600 max-w-xs text-center lg:text-left">
@@ -268,7 +305,7 @@ const AppointmentScheduler: React.FC = () => {
                   </div>
                   <button
                     className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                      onClick={() => {
+                    onClick={() => {
                       reset();
                       setSelectedMentorId(null);
                       setSelectedDate(dates[0]);

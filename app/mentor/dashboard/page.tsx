@@ -16,12 +16,14 @@ export default function MentorDashboardPage() {
   if (!userId) return <p>Erro ao identificar usuário</p>;
   if (isLoading || !profile) return <p>Carregando perfil...</p>;
 
+  const mentorId = profile.id; // ID da tabela Mentor
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Painel do Mentor</h1>
         <MentorProfileForm profile={profile} updateProfile={updateProfile} />
-        <ScheduleForm mentorId={userId} />
+        <ScheduleForm mentorId={mentorId} />
       </main>
     </div>
   );
