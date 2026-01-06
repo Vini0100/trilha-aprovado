@@ -3,22 +3,31 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarCheck, Clock } from 'lucide-react';
 import { useMentorAppointments } from '@/hooks/useAppointment';
+import { useMentorProfile } from '@/hooks/useMentor';
 
 export default function MentorAppointmentsPage() {
   const { data: session } = useSession();
-  const mentorId =
-   session?.user.id ? Number(session.user.id) : undefined;
-  const { data: appointments, isLoading } = useMentorAppointments(mentorId);
+  const userId = session?.user.id ? Number(session.user.id) : null;
 
-  if (!mentorId) {
+  const { data: profile, isLoading: isLoadingProfile } = useMentorProfile(userId);
+  const mentorId = profile?.id;
+
+  const { data: appointments, isLoading: isLoadingAppointments } = useMentorAppointments(mentorId);
+
+  if (!userId) {
     return (
       <div className="p-8 text-center">
         Faça login como mentor para ver seus agendamentos pagos.
       </div>
     );
   }
-  if (isLoading) {
+
+  if (isLoadingProfile || isLoadingAppointments) {
     return <div className="p-8 text-center">Carregando agendamentos...</div>;
+  }
+
+  if (!mentorId) {
+    return <div className="p-8 text-center">Perfil de mentor não encontrado.</div>;
   }
   if (!appointments || appointments.length === 0) {
     return (

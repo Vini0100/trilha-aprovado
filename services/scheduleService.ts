@@ -36,6 +36,10 @@ export async function createMentorSchedulesService(
   }
 
   return res.json();
+}
+
+export async function getMentorSchedulesService(mentorId: number) {
+  const res = await fetch(`/api/schedule?mentorId=${mentorId}`);
   if (!res.ok) throw new Error('Erro ao buscar horários');
   return res.json();
 }

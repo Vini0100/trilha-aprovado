@@ -52,7 +52,7 @@ describe('ScheduleForm', () => {
       expect.objectContaining({
         day: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
         startTime: '08:00',
-        endTime: '9:00',
+        endTime: '09:00',
       }),
     );
   });
